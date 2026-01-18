@@ -105,7 +105,7 @@ export function TimeEntryForm({
             </SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 space-y-4 py-4">
+          <div className="flex-1 space-y-4 p-4">
             <div className="space-y-2">
               <Label>Project</Label>
               <ProjectSelector

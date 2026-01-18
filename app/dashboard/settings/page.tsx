@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { useTheme } from "next-themes"
 import { useSettings } from "@/lib/db/hooks"
 import { downloadJsonExport } from "@/lib/db/operations/export"
 import { importFromFile } from "@/lib/db/operations/import"
@@ -23,7 +24,8 @@ import { Download, Upload, Trash2 } from "lucide-react"
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 export default function SettingsPage() {
-  const { settings, updateProfile, updateWorkSettings, updateTheme, isLoading } = useSettings()
+  const { settings, updateProfile, updateWorkSettings, isLoading } = useSettings()
+  const { theme, setTheme } = useTheme()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showClearDialog, setShowClearDialog] = useState(false)
   const [importStatus, setImportStatus] = useState<string | null>(null)
@@ -234,7 +236,7 @@ export default function SettingsPage() {
         <CardContent>
           <div className="space-y-2">
             <Label>Theme</Label>
-            <Select value={settings.theme} onValueChange={(value) => value && updateTheme(value)}>
+            <Select value={theme} onValueChange={setTheme}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
