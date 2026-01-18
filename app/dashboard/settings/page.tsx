@@ -236,7 +236,7 @@ export default function SettingsPage() {
         <CardContent>
           <div className="space-y-2">
             <Label>Theme</Label>
-            <Select value={theme} onValueChange={setTheme}>
+            <Select value={theme} onValueChange={(value) => value && setTheme(value)}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
