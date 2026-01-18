@@ -41,24 +41,24 @@ export function WeeklyChart({
         <CardTitle className="text-base">Weekly Activity</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-48">
+        <div className="h-48 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <XAxis
                 dataKey="day"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 12, fill: "currentColor" }}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 12, fill: "currentColor" }}
                 domain={[0, Math.ceil(maxHours)]}
                 tickFormatter={(value) => `${value}h`}
               />
               <Tooltip
-                cursor={{ fill: "hsl(var(--muted))", opacity: 0.5 }}
+                cursor={{ fill: "oklch(var(--muted))", opacity: 0.5 }}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload
@@ -80,8 +80,8 @@ export function WeeklyChart({
                     key={`cell-${index}`}
                     fill={
                       entry.hours >= targetHoursPerDay
-                        ? "hsl(var(--primary))"
-                        : "hsl(var(--primary) / 0.6)"
+                        ? "oklch(var(--primary))"
+                        : "oklch(var(--primary) / 0.6)"
                     }
                   />
                 ))}
