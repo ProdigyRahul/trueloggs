@@ -168,6 +168,11 @@ function formatDuration(minutes: number): string {
   return `${hours}h ${mins}m`
 }
 
+function getPeriodText(lineItems: InvoiceLineItem[]): string {
+  if (lineItems.length === 0) return "N/A"
+  return `${formatDate(lineItems[0].date)} - ${formatDate(lineItems[lineItems.length - 1].date)}`
+}
+
 interface Props {
   data: InvoiceData
 }
@@ -206,7 +211,7 @@ export function InvoiceDocument({ data }: Props) {
                 Due Date: {formatDate(data.dueDate)}
               </Text>
               <Text style={styles.infoRow}>
-                Period: {formatDate(data.lineItems[0].date)} - {formatDate(data.lineItems[data.lineItems.length - 1].date)}
+                Period: {getPeriodText(data.lineItems)}
               </Text>
             </View>
           </View>

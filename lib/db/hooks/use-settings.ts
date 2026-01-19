@@ -41,9 +41,15 @@ export function useSettings() {
       const current = await db.settings.get("settings")
       if (!current) return
 
+      const currentInvoiceSettings = current.invoiceSettings || {
+        invoiceCounter: 0,
+        invoicePrefix: "INV",
+        lastInvoiceYear: new Date().getFullYear(),
+      }
+
       await db.settings.update("settings", {
         invoiceSettings: {
-          ...current.invoiceSettings,
+          ...currentInvoiceSettings,
           ...invoiceSettingsUpdates,
         },
       })
