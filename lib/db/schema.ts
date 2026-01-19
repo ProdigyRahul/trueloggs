@@ -45,12 +45,19 @@ export interface WorkSettings {
   workDays: [boolean, boolean, boolean, boolean, boolean, boolean, boolean]
 }
 
+export interface InvoiceSettings {
+  invoiceCounter: number
+  invoicePrefix: string
+  lastInvoiceYear: number
+}
+
 export type ThemePreference = "light" | "dark" | "system"
 
 export interface Settings {
   id: "settings"
   profile: UserProfile
   workSettings: WorkSettings
+  invoiceSettings: InvoiceSettings
   theme: ThemePreference
 }
 

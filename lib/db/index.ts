@@ -59,9 +59,22 @@ export async function initializeDatabase(): Promise<void> {
         defaultHourlyRate: 50,
         workDays: [false, true, true, true, true, true, false],
       },
+      invoiceSettings: {
+        invoiceCounter: 0,
+        invoicePrefix: "INV",
+        lastInvoiceYear: new Date().getFullYear(),
+      },
       theme: "system",
+    })
+  } else if (!settingsExists.invoiceSettings) {
+    await db.settings.update("settings", {
+      invoiceSettings: {
+        invoiceCounter: 0,
+        invoicePrefix: "INV",
+        lastInvoiceYear: new Date().getFullYear(),
+      },
     })
   }
 }
 
-export type { Project, TimeEntry, TimerState, Settings, RecentTask } from "./schema"
+export type { Project, TimeEntry, TimerState, Settings, RecentTask, InvoiceSettings } from "./schema"

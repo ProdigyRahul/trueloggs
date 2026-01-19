@@ -3,7 +3,7 @@
 import { useLiveQuery } from "dexie-react-hooks"
 import { useCallback } from "react"
 import { db } from "../index"
-import type { UserProfile, WorkSettings, ThemePreference } from "../schema"
+import type { UserProfile, WorkSettings, ThemePreference, InvoiceSettings } from "../schema"
 
 export function useSettings() {
   const settings = useLiveQuery(() => db.settings.get("settings"), [], null)
@@ -36,6 +36,27 @@ export function useSettings() {
     await db.settings.update("settings", { theme })
   }, [])
 
+  const updateInvoiceSettings = useCallback(
+    async (invoiceSettingsUpdates: Partial<InvoiceSettings>): Promise<void> => {
+      const current = await db.settings.get("settings")
+      if (!current) return
+
+      const currentInvoiceSettings = current.invoiceSettings || {
+        invoiceCounter: 0,
+        invoicePrefix: "INV",
+        lastInvoiceYear: new Date().getFullYear(),
+      }
+
+      await db.settings.update("settings", {
+        invoiceSettings: {
+          ...currentInvoiceSettings,
+          ...invoiceSettingsUpdates,
+        },
+      })
+    },
+    []
+  )
+
   const resetSettings = useCallback(async (): Promise<void> => {
     await db.settings.put({
       id: "settings",
@@ -52,6 +73,11 @@ export function useSettings() {
         defaultHourlyRate: 50,
         workDays: [false, true, true, true, true, true, false],
       },
+      invoiceSettings: {
+        invoiceCounter: 0,
+        invoicePrefix: "INV",
+        lastInvoiceYear: new Date().getFullYear(),
+      },
       theme: "system",
     })
   }, [])
@@ -61,6 +87,7 @@ export function useSettings() {
     isLoading: settings === null,
     updateProfile,
     updateWorkSettings,
+    updateInvoiceSettings,
     updateTheme,
     resetSettings,
   }
