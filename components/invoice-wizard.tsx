@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { useProjects, useTimeEntries } from "@/lib/db/hooks"
-import { prepareInvoiceData } from "@/lib/pdf/invoice-generator"
+import Link from "next/link"
+import { useProjects, useTimeEntries, useInvoices } from "@/lib/db/hooks"
+import { prepareInvoiceData, invoiceDataToStorable } from "@/lib/pdf/invoice-generator"
 import { formatDuration, formatCurrency } from "@/lib/db/utils"
 import type { InvoiceFormData, InvoiceData } from "@/lib/pdf/invoice-types"
 import { Button } from "@/components/ui/button"
@@ -19,17 +20,19 @@ import {
 } from "@/components/ui/card"
 import { ProjectSelector } from "@/components/project-selector"
 import { InvoiceDownloadButton } from "@/components/invoice-download-button"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react"
 
 interface Props {
   open: boolean
+  onInvoiceSaved?: (invoiceId: number) => void
 }
 
 type WizardStep = 1 | 2 | 3
 
-export function InvoiceWizard({ open }: Props) {
+export function InvoiceWizard({ open, onInvoiceSaved }: Props) {
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
   const { projects } = useProjects("active")
+  const { createInvoice } = useInvoices()
 
   const [projectId, setProjectId] = useState<number | null>(null)
   const [periodStart, setPeriodStart] = useState("")
@@ -43,6 +46,8 @@ export function InvoiceWizard({ open }: Props) {
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null)
   const [isPreparingInvoice, setIsPreparingInvoice] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [savedInvoiceId, setSavedInvoiceId] = useState<number | null>(null)
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === projectId),
@@ -89,6 +94,7 @@ export function InvoiceWizard({ open }: Props) {
         setNotes("")
         setInvoiceData(null)
         setError(null)
+        setSavedInvoiceId(null)
       }, 300)
     }
   }, [open])
@@ -126,6 +132,10 @@ export function InvoiceWizard({ open }: Props) {
         const data = await prepareInvoiceData(formData)
         setInvoiceData(data)
         setCurrentStep(3)
+
+        const storableInvoice = invoiceDataToStorable(data, formData)
+        const id = await createInvoice(storableInvoice)
+        setSavedInvoiceId(id)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to prepare invoice")
       } finally {
@@ -494,7 +504,7 @@ export function InvoiceWizard({ open }: Props) {
 
       <CardFooter className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          {currentStep > 1 && (
+          {currentStep > 1 && !savedInvoiceId && (
             <Button
               variant="outline"
               onClick={handleBack}
@@ -519,9 +529,25 @@ export function InvoiceWizard({ open }: Props) {
               {isPreparingInvoice ? "Preparing..." : "Next"}
               <ArrowRight className="size-4" />
             </Button>
+          ) : savedInvoiceId ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle className="size-4" />
+                <span className="text-sm font-medium">Saved!</span>
+              </div>
+              {invoiceData && <InvoiceDownloadButton invoiceData={invoiceData} />}
+              <Link href={`/dashboard/invoices/${savedInvoiceId}`}>
+                <Button variant="outline" size="sm">View</Button>
+              </Link>
+              <Button size="sm" onClick={() => onInvoiceSaved?.(savedInvoiceId)}>
+                Done
+              </Button>
+            </div>
           ) : (
             invoiceData && (
-              <InvoiceDownloadButton invoiceData={invoiceData} />
+              <div className="flex items-center gap-2">
+                <InvoiceDownloadButton invoiceData={invoiceData} />
+              </div>
             )
           )}
         </div>

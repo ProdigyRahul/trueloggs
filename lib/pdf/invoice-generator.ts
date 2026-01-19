@@ -3,7 +3,7 @@
 import { db } from "@/lib/db"
 import { calculateRevenue, normalizeDate } from "@/lib/db/utils"
 import type { InvoiceData, InvoiceFormData, InvoiceLineItem } from "./invoice-types"
-import type { TimeEntry } from "@/lib/db/schema"
+import type { TimeEntry, Invoice, CreateInvoiceInput, StoredInvoiceLineItem } from "@/lib/db/schema"
 
 export async function generateInvoiceNumber(): Promise<string> {
   const settings = await db.settings.get("settings")
@@ -116,4 +116,80 @@ export function generateInvoiceFilename(
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
   return `${invoiceNumber.toLowerCase()}-${sanitizedClient}.pdf`
+}
+
+export function invoiceDataToStorable(
+  data: InvoiceData,
+  formData: InvoiceFormData
+): CreateInvoiceInput {
+  return {
+    invoiceNumber: data.invoiceNumber,
+    status: "draft",
+
+    invoiceDate: data.invoiceDate.toISOString(),
+    dueDate: data.dueDate.toISOString(),
+
+    companyName: data.companyName,
+    companyEmail: data.companyEmail,
+    companyPhone: data.companyPhone,
+    companyAddress: data.companyAddress,
+
+    clientName: data.clientName,
+    clientEmail: formData.clientEmail,
+    projectName: data.projectName,
+    projectColor: data.projectColor,
+    projectId: formData.projectId,
+
+    lineItems: data.lineItems.map((item): StoredInvoiceLineItem => ({
+      date: item.date.toISOString(),
+      description: item.description,
+      duration: item.duration,
+      rate: item.rate,
+      amount: item.amount,
+    })),
+
+    subtotal: data.subtotal,
+    taxRate: data.taxRate,
+    taxAmount: data.taxAmount,
+    total: data.total,
+
+    periodStart: formData.periodStart.toISOString(),
+    periodEnd: formData.periodEnd.toISOString(),
+
+    notes: data.notes,
+    paymentTerms: data.paymentTerms,
+  }
+}
+
+export function storedInvoiceToInvoiceData(invoice: Invoice): InvoiceData {
+  return {
+    invoiceNumber: invoice.invoiceNumber,
+    invoiceDate: new Date(invoice.invoiceDate),
+    dueDate: new Date(invoice.dueDate),
+
+    companyName: invoice.companyName,
+    companyEmail: invoice.companyEmail,
+    companyPhone: invoice.companyPhone,
+    companyAddress: invoice.companyAddress,
+
+    clientName: invoice.clientName,
+    projectName: invoice.projectName,
+    projectColor: invoice.projectColor,
+
+    lineItems: invoice.lineItems.map((item) => ({
+      date: new Date(item.date),
+      description: item.description,
+      duration: item.duration,
+      rate: item.rate,
+      amount: item.amount,
+    })),
+
+    subtotal: invoice.subtotal,
+    taxRate: invoice.taxRate,
+    taxAmount: invoice.taxAmount,
+    total: invoice.total,
+
+    notes: invoice.notes,
+    paymentTerms: invoice.paymentTerms,
+  }
 }

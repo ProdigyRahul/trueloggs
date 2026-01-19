@@ -5,6 +5,7 @@ import type {
   TimerState,
   Settings,
   RecentTask,
+  Invoice,
 } from "./schema"
 
 class TrueLoggsDB extends Dexie {
@@ -13,16 +14,18 @@ class TrueLoggsDB extends Dexie {
   timerState!: EntityTable<TimerState, "id">
   settings!: EntityTable<Settings, "id">
   recentTasks!: EntityTable<RecentTask, "id">
+  invoices!: EntityTable<Invoice, "id">
 
   constructor() {
     super("TrueLoggsDB")
 
-    this.version(1).stores({
+    this.version(2).stores({
       projects: "++id, name, status, clientName, createdAt",
       timeEntries: "++id, projectId, date, [projectId+date], createdAt",
       timerState: "id",
       settings: "id",
       recentTasks: "++id, projectId, taskDescription, lastUsedAt, [projectId+taskDescription]",
+      invoices: "++id, invoiceNumber, status, clientName, projectId, invoiceDate, createdAt",
     })
   }
 }
@@ -77,4 +80,4 @@ export async function initializeDatabase(): Promise<void> {
   }
 }
 
-export type { Project, TimeEntry, TimerState, Settings, RecentTask, InvoiceSettings } from "./schema"
+export type { Project, TimeEntry, TimerState, Settings, RecentTask, InvoiceSettings, Invoice, InvoiceStatus, CreateInvoiceInput, UpdateInvoiceInput, StoredInvoiceLineItem } from "./schema"
