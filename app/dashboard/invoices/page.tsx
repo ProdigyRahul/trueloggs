@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { InvoiceWizard } from "@/components/invoice-wizard"
-import { Plus, FileText, X } from "lucide-react"
+import { Plus, X, FileText, Clock, DollarSign, Download } from "lucide-react"
 
 export default function InvoicesPage() {
   const [showWizard, setShowWizard] = useState(false)
@@ -29,20 +29,33 @@ export default function InvoicesPage() {
             <div className="flex size-16 items-center justify-center rounded-full bg-muted mb-4">
               <FileText className="size-8 text-muted-foreground" />
             </div>
-            <h3 className="font-semibold mb-1">Generate Professional Invoices</h3>
-            <p className="text-muted-foreground text-sm mb-4 max-w-md">
+            <h3 className="font-semibold text-lg mb-2">Generate Professional Invoices</h3>
+            <p className="text-muted-foreground text-sm mb-6 max-w-md">
               Create PDF invoices from your tracked time entries. Select a project,
               configure details, and download a professional invoice ready to send to your clients.
             </p>
-            <Button onClick={() => setShowWizard(true)} className="gap-2">
-              <Plus className="size-4" />
-              Create Your First Invoice
-            </Button>
+            <div className="grid gap-4 sm:grid-cols-3 text-sm">
+              <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50">
+                <Clock className="size-5 text-muted-foreground" />
+                <span className="font-medium">Track Time</span>
+                <span className="text-xs text-muted-foreground">Log your work hours</span>
+              </div>
+              <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50">
+                <DollarSign className="size-5 text-muted-foreground" />
+                <span className="font-medium">Set Rates</span>
+                <span className="text-xs text-muted-foreground">Configure hourly rates</span>
+              </div>
+              <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50">
+                <Download className="size-5 text-muted-foreground" />
+                <span className="font-medium">Export PDF</span>
+                <span className="text-xs text-muted-foreground">Download & send</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      <InvoiceWizard open={showWizard} onOpenChange={setShowWizard} />
+      <InvoiceWizard open={showWizard} />
     </div>
   )
 }

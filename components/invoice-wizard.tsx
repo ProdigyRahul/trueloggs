@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -20,16 +19,15 @@ import {
 } from "@/components/ui/card"
 import { ProjectSelector } from "@/components/project-selector"
 import { InvoiceDownloadButton } from "@/components/invoice-download-button"
-import { ArrowLeft, ArrowRight, X } from "lucide-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 
 interface Props {
   open: boolean
-  onOpenChange: (open: boolean) => void
 }
 
 type WizardStep = 1 | 2 | 3
 
-export function InvoiceWizard({ open, onOpenChange }: Props) {
+export function InvoiceWizard({ open }: Props) {
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
   const { projects } = useProjects("active")
 
@@ -169,16 +167,6 @@ export function InvoiceWizard({ open, onOpenChange }: Props) {
         <CardDescription>
           Step {currentStep} of 3 - {stepDescription}
         </CardDescription>
-        <CardAction>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="size-4" />
-            <span className="sr-only">Close</span>
-          </Button>
-        </CardAction>
       </CardHeader>
 
       <CardContent className="pt-6 space-y-6">
