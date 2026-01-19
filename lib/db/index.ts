@@ -19,13 +19,13 @@ class TrueLoggsDB extends Dexie {
   constructor() {
     super("TrueLoggsDB")
 
-    this.version(2).stores({
+    this.version(3).stores({
       projects: "++id, name, status, clientName, createdAt",
       timeEntries: "++id, projectId, date, [projectId+date], createdAt",
       timerState: "id",
       settings: "id",
       recentTasks: "++id, projectId, taskDescription, lastUsedAt, [projectId+taskDescription]",
-      invoices: "++id, invoiceNumber, status, clientName, projectId, invoiceDate, createdAt",
+      invoices: "++id, &invoiceNumber, status, clientName, projectId, invoiceDate, createdAt",
     })
   }
 }
