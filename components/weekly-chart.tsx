@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
   BarChart,
   Bar,
@@ -28,6 +29,23 @@ export function WeeklyChart({
   targetHoursPerDay = 8,
   className,
 }: WeeklyChartProps) {
+  const [primaryColor, setPrimaryColor] = useState("#ec4899")
+
+  useEffect(() => {
+    const computeColor = () => {
+      const style = getComputedStyle(document.documentElement)
+      const primary = style.getPropertyValue("--primary").trim()
+      if (primary) {
+        setPrimaryColor(primary)
+      }
+    }
+    computeColor()
+
+    const observer = new MutationObserver(computeColor)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
+    return () => observer.disconnect()
+  }, [])
+
   const chartData = data.map((d) => ({
     ...d,
     hours: Math.round(d.hours * 10) / 10,
@@ -58,7 +76,7 @@ export function WeeklyChart({
                 tickFormatter={(value) => `${value}h`}
               />
               <Tooltip
-                cursor={{ fill: "oklch(var(--muted))", opacity: 0.5 }}
+                cursor={{ fill: "currentColor", opacity: 0.1 }}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload
@@ -78,11 +96,8 @@ export function WeeklyChart({
                 {chartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={
-                      entry.hours >= targetHoursPerDay
-                        ? "oklch(var(--primary))"
-                        : "oklch(var(--primary) / 0.6)"
-                    }
+                    fill={primaryColor}
+                    fillOpacity={entry.hours >= targetHoursPerDay ? 1 : 0.6}
                   />
                 ))}
               </Bar>
