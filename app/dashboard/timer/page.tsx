@@ -71,8 +71,13 @@ export default function TimerPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">Timer</h1>
-        <div className="animate-pulse">
-          <div className="h-64 bg-muted rounded-xl max-w-lg mx-auto" />
+        <div className="grid gap-6 lg:grid-cols-3 animate-pulse">
+          <div className="h-64 bg-muted rounded-xl lg:col-span-2" />
+          <div className="space-y-4">
+            <div className="h-24 bg-muted rounded-xl" />
+            <div className="h-24 bg-muted rounded-xl" />
+            <div className="h-40 bg-muted rounded-xl" />
+          </div>
         </div>
       </div>
     )
@@ -82,101 +87,105 @@ export default function TimerPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Timer</h1>
 
-      <Card className="max-w-lg mx-auto">
-        <CardContent className="flex flex-col items-center gap-6 p-6">
-          <div className="w-full space-y-2">
-            <label className="text-sm font-medium">Project</label>
-            <ProjectSelector
-              value={effectiveProjectId}
-              onValueChange={handleProjectChange}
-              disabled={isRunning}
-              placeholder="Select a project to start"
-            />
-          </div>
-
-          <div className="w-full space-y-2">
-            <label className="text-sm font-medium">What are you working on?</label>
-            <TaskInput
-              projectId={effectiveProjectId}
-              value={effectiveTaskDescription}
-              onValueChange={handleTaskChange}
-              disabled={!effectiveProjectId}
-              placeholder={effectiveProjectId ? "Describe your task (optional)" : "Select a project first"}
-            />
-          </div>
-
-          <TimerDisplay
-            time={formattedTime}
-            isRunning={isRunning}
-            isPaused={isPaused}
-            size="large"
-          />
-
-          <Badge
-            variant={status === "working" ? "default" : status === "paused" ? "secondary" : "outline"}
-            className="text-sm"
-          >
-            {status === "working" ? "Working" : status === "paused" ? "Paused" : "Idle"}
-          </Badge>
-
-          {project && (isRunning || isPaused) && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div
-                className="size-3 rounded-full"
-                style={{ backgroundColor: project.color }}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardContent className="flex flex-col items-center gap-6 p-6">
+            <div className="w-full space-y-2">
+              <label className="text-sm font-medium">Project</label>
+              <ProjectSelector
+                value={effectiveProjectId}
+                onValueChange={handleProjectChange}
+                disabled={isRunning}
+                placeholder="Select a project to start"
               />
-              <span>{project.name}</span>
-              <span>&bull;</span>
-              <span>${project.hourlyRate}/hr</span>
             </div>
-          )}
 
-          <TimerControls
-            isRunning={isRunning}
-            isPaused={isPaused}
-            canStart={canStart}
-            onStart={handleStart}
-            onStop={handleStop}
-            onPause={pause}
-            onResume={resume}
-            onDiscard={discard}
-            disabled={!effectiveProjectId && canStart}
-          />
-        </CardContent>
-      </Card>
+            <div className="w-full space-y-2">
+              <label className="text-sm font-medium">What are you working on?</label>
+              <TaskInput
+                projectId={effectiveProjectId}
+                value={effectiveTaskDescription}
+                onValueChange={handleTaskChange}
+                disabled={!effectiveProjectId}
+                placeholder={effectiveProjectId ? "Describe your task (optional)" : "Select a project first"}
+              />
+            </div>
 
-      <div className="grid gap-4 md:grid-cols-2 max-w-lg mx-auto">
-        <StatsCard
-          title="Today"
-          value={formatDuration(todayMinutes)}
-          subtitle={`${todayEntries.length} ${todayEntries.length === 1 ? "entry" : "entries"}`}
-          icon={<Clock className="size-4" />}
-        />
-        <StatsCard
-          title="This Week"
-          value={formatDuration(weekMinutes)}
-          subtitle={`${weekEntries.length} ${weekEntries.length === 1 ? "entry" : "entries"}`}
-          icon={<Calendar className="size-4" />}
-        />
-      </div>
+            <TimerDisplay
+              time={formattedTime}
+              isRunning={isRunning}
+              isPaused={isPaused}
+              size="large"
+            />
 
-      {todayEntries.length > 0 && (
-        <Card className="max-w-lg mx-auto">
-          <CardHeader>
-            <CardTitle className="text-base">Today&apos;s Entries</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {todayEntries.slice(0, 5).map((entry) => (
-              <TodayEntryItem key={entry.id} entry={entry} />
-            ))}
-            {todayEntries.length > 5 && (
-              <p className="text-sm text-muted-foreground text-center pt-2">
-                +{todayEntries.length - 5} more entries
-              </p>
+            <Badge
+              variant={status === "working" ? "default" : status === "paused" ? "secondary" : "outline"}
+              className="text-sm"
+            >
+              {status === "working" ? "Working" : status === "paused" ? "Paused" : "Idle"}
+            </Badge>
+
+            {project && (isRunning || isPaused) && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div
+                  className="size-3 rounded-full"
+                  style={{ backgroundColor: project.color }}
+                />
+                <span>{project.name}</span>
+                <span>&bull;</span>
+                <span>${project.hourlyRate}/hr</span>
+              </div>
             )}
+
+            <TimerControls
+              isRunning={isRunning}
+              isPaused={isPaused}
+              canStart={canStart}
+              onStart={handleStart}
+              onStop={handleStop}
+              onPause={pause}
+              onResume={resume}
+              onDiscard={discard}
+              disabled={!effectiveProjectId && canStart}
+            />
           </CardContent>
         </Card>
-      )}
+
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <StatsCard
+              title="Today"
+              value={formatDuration(todayMinutes)}
+              subtitle={`${todayEntries.length} ${todayEntries.length === 1 ? "entry" : "entries"}`}
+              icon={<Clock className="size-4" />}
+            />
+            <StatsCard
+              title="This Week"
+              value={formatDuration(weekMinutes)}
+              subtitle={`${weekEntries.length} ${weekEntries.length === 1 ? "entry" : "entries"}`}
+              icon={<Calendar className="size-4" />}
+            />
+          </div>
+
+          {todayEntries.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Today&apos;s Entries</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {todayEntries.slice(0, 5).map((entry) => (
+                  <TodayEntryItem key={entry.id} entry={entry} />
+                ))}
+                {todayEntries.length > 5 && (
+                  <p className="text-sm text-muted-foreground text-center pt-2">
+                    +{todayEntries.length - 5} more entries
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

@@ -76,19 +76,23 @@ export default function CalendarPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">Calendar</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <Button variant="outline" size="sm" onClick={goToToday}>
             Today
           </Button>
-          <Button variant="outline" size="icon-sm" onClick={goToPreviousWeek}>
-            <ChevronLeft className="size-4" />
-          </Button>
-          <span className="text-sm font-medium min-w-48 text-center">{weekLabel}</span>
-          <Button variant="outline" size="icon-sm" onClick={goToNextWeek}>
-            <ChevronRight className="size-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon-sm" onClick={goToPreviousWeek}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="text-sm font-medium min-w-40 text-center sm:min-w-48">
+              {weekLabel}
+            </span>
+            <Button variant="outline" size="icon-sm" onClick={goToNextWeek}>
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -97,55 +101,57 @@ export default function CalendarPage() {
           {isLoading ? (
             <div className="h-96 animate-pulse bg-muted" />
           ) : (
-            <div className="grid grid-cols-7 divide-x">
-              {days.map((day) => {
-                const dateKey = day.toISOString().split("T")[0]
-                const dayEntries = entriesByDate.get(dateKey) ?? []
-                const dayTotal = dayEntries.reduce((sum, e) => sum + e.duration, 0)
-                const isTodayDate = isToday(day)
+            <div className="overflow-x-auto">
+              <div className="grid min-w-[700px] grid-cols-7 divide-x">
+                {days.map((day) => {
+                  const dateKey = day.toISOString().split("T")[0]
+                  const dayEntries = entriesByDate.get(dateKey) ?? []
+                  const dayTotal = dayEntries.reduce((sum, e) => sum + e.duration, 0)
+                  const isTodayDate = isToday(day)
 
-                return (
-                  <div
-                    key={dateKey}
-                    className={cn(
-                      "min-h-48 p-2 flex flex-col",
-                      isTodayDate && "bg-primary/5"
-                    )}
-                  >
-                    <div className="text-center mb-2">
-                      <div className="text-xs text-muted-foreground">
-                        {formatWeekday(day)}
+                  return (
+                    <div
+                      key={dateKey}
+                      className={cn(
+                        "min-h-48 p-2 flex flex-col",
+                        isTodayDate && "bg-primary/5"
+                      )}
+                    >
+                      <div className="text-center mb-2">
+                        <div className="text-xs text-muted-foreground">
+                          {formatWeekday(day)}
+                        </div>
+                        <div
+                          className={cn(
+                            "text-sm font-medium",
+                            isTodayDate &&
+                              "bg-primary text-primary-foreground rounded-full size-7 flex items-center justify-center mx-auto"
+                          )}
+                        >
+                          {day.getDate()}
+                        </div>
                       </div>
-                      <div
-                        className={cn(
-                          "text-sm font-medium",
-                          isTodayDate &&
-                            "bg-primary text-primary-foreground rounded-full size-7 flex items-center justify-center mx-auto"
-                        )}
-                      >
-                        {day.getDate()}
+
+                      <div className="flex-1 space-y-1 overflow-auto">
+                        {dayEntries.map((entry) => (
+                          <CalendarEntry
+                            key={entry.id}
+                            entry={entry}
+                            projectMap={projectMap}
+                            onClick={() => handleEntryClick(entry)}
+                          />
+                        ))}
                       </div>
+
+                      {dayTotal > 0 && (
+                        <div className="mt-2 pt-2 border-t text-xs text-center text-muted-foreground">
+                          {formatDuration(dayTotal)}
+                        </div>
+                      )}
                     </div>
-
-                    <div className="flex-1 space-y-1 overflow-auto">
-                      {dayEntries.map((entry) => (
-                        <CalendarEntry
-                          key={entry.id}
-                          entry={entry}
-                          projectMap={projectMap}
-                          onClick={() => handleEntryClick(entry)}
-                        />
-                      ))}
-                    </div>
-
-                    {dayTotal > 0 && (
-                      <div className="mt-2 pt-2 border-t text-xs text-center text-muted-foreground">
-                        {formatDuration(dayTotal)}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
           )}
         </CardContent>
