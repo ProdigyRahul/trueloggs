@@ -88,11 +88,74 @@ export interface DateRange {
   end: Date
 }
 
+// Invoice status enum
+export type InvoiceStatus = "draft" | "sent" | "paid" | "cancelled"
+
+// Stored version of InvoiceLineItem (dates as ISO strings for IndexedDB)
+export interface StoredInvoiceLineItem {
+  date: string // ISO string
+  description: string
+  duration: number // minutes
+  rate: number
+  amount: number
+}
+
+// Main Invoice entity - stores COMPLETE SNAPSHOT of invoice data
+export interface Invoice {
+  id?: number
+
+  // Identification
+  invoiceNumber: string
+  status: InvoiceStatus
+
+  // Dates (ISO strings for IndexedDB compatibility)
+  invoiceDate: string
+  dueDate: string
+  createdAt: string
+  updatedAt: string
+  paidAt?: string
+
+  // Snapshot of company info at invoice time
+  companyName: string
+  companyEmail: string
+  companyPhone: string
+  companyAddress: string
+
+  // Snapshot of client/project info
+  clientName: string
+  clientEmail?: string
+  projectName: string
+  projectColor: string
+
+  // Reference to original project (may be null if deleted)
+  projectId?: number
+
+  // Financial data
+  lineItems: StoredInvoiceLineItem[] // Embedded array
+  subtotal: number
+  taxRate: number
+  taxAmount: number
+  total: number
+
+  // Period covered
+  periodStart: string
+  periodEnd: string
+
+  // Additional
+  notes?: string
+  paymentTerms?: string
+}
+
+// CRUD input types
+export type CreateInvoiceInput = Omit<Invoice, "id" | "createdAt" | "updatedAt">
+export type UpdateInvoiceInput = Partial<Pick<Invoice, "status" | "notes" | "paidAt">>
+
 export interface ExportData {
   version: string
   exportedAt: Date
   projects: Project[]
   timeEntries: TimeEntry[]
+  invoices: Invoice[]
   settings: Settings | null
   recentTasks: RecentTask[]
 }

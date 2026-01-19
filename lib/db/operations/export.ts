@@ -5,11 +5,12 @@ import { formatDate, formatDuration, calculateRevenue } from "../utils"
 const EXPORT_VERSION = "1.0.0"
 
 export async function exportAllData(): Promise<ExportData> {
-  const [projects, timeEntries, settings, recentTasks] = await Promise.all([
+  const [projects, timeEntries, settings, recentTasks, invoices] = await Promise.all([
     db.projects.toArray(),
     db.timeEntries.toArray(),
     db.settings.get("settings"),
     db.recentTasks.toArray(),
+    db.invoices.toArray(),
   ])
 
   return {
@@ -17,6 +18,7 @@ export async function exportAllData(): Promise<ExportData> {
     exportedAt: new Date(),
     projects,
     timeEntries,
+    invoices,
     settings: settings ?? null,
     recentTasks,
   }
