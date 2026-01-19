@@ -33,7 +33,6 @@ export function InvoiceWizard({ open, onOpenChange }: Props) {
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
   const { projects } = useProjects("active")
 
-  // Form state
   const [projectId, setProjectId] = useState<number | null>(null)
   const [periodStart, setPeriodStart] = useState("")
   const [periodEnd, setPeriodEnd] = useState("")
@@ -43,18 +42,15 @@ export function InvoiceWizard({ open, onOpenChange }: Props) {
   const [dueInDays, setDueInDays] = useState(30)
   const [notes, setNotes] = useState("")
 
-  // Invoice preview state
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null)
   const [isPreparingInvoice, setIsPreparingInvoice] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Get selected project
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === projectId),
     [projects, projectId]
   )
 
-  // Get time entries for preview
   const { entries: timeEntries = [], totalMinutes = 0 } = useTimeEntries(
     projectId && periodStart && periodEnd
       ? {
@@ -67,14 +63,12 @@ export function InvoiceWizard({ open, onOpenChange }: Props) {
       : undefined
   ) || {}
 
-  // Auto-fill client name from project
   useEffect(() => {
     if (selectedProject && !clientName) {
       setClientName(selectedProject.clientName || "")
     }
   }, [selectedProject, clientName])
 
-  // Set default date range to current month
   useEffect(() => {
     if (open && !periodStart) {
       const now = new Date()
@@ -85,7 +79,6 @@ export function InvoiceWizard({ open, onOpenChange }: Props) {
     }
   }, [open, periodStart])
 
-  // Reset wizard when closed
   useEffect(() => {
     if (!open) {
       setTimeout(() => {
@@ -120,7 +113,6 @@ export function InvoiceWizard({ open, onOpenChange }: Props) {
         setError("Please enter a client name")
         return
       }
-      // Prepare invoice preview
       setIsPreparingInvoice(true)
       try {
         const formData: InvoiceFormData = {

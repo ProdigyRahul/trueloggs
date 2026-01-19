@@ -67,7 +67,6 @@ export async function initializeDatabase(): Promise<void> {
       theme: "system",
     })
   } else if (!settingsExists.invoiceSettings) {
-    // Migration: add invoice settings to existing settings
     await db.settings.update("settings", {
       invoiceSettings: {
         invoiceCounter: 0,

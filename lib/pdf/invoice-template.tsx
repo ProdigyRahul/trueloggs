@@ -10,7 +10,6 @@ import {
 } from "@react-pdf/renderer"
 import type { InvoiceData } from "./invoice-types"
 
-// Professional invoice color palette (always light theme for printing)
 const COLORS = {
   primary: "#e11d48",
   text: "#1e293b",
@@ -177,7 +176,6 @@ export function InvoiceDocument({ data }: Props) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Header */}
         <View style={styles.header}>
           <View>
             <Text style={styles.companyName}>{data.companyName}</Text>
@@ -193,7 +191,6 @@ export function InvoiceDocument({ data }: Props) {
           </View>
         </View>
 
-        {/* Bill To & Invoice Details */}
         <View style={styles.billToSection}>
           <View style={styles.billToRow}>
             <View style={styles.billToBlock}>
@@ -215,7 +212,6 @@ export function InvoiceDocument({ data }: Props) {
           </View>
         </View>
 
-        {/* Line Items Table */}
         <View style={styles.table}>
           <View style={styles.tableHeader}>
             <Text style={styles.colDate}>Date</Text>
@@ -235,7 +231,6 @@ export function InvoiceDocument({ data }: Props) {
           ))}
         </View>
 
-        {/* Summary */}
         <View style={styles.summary}>
           <View style={styles.summaryRow}>
             <Text>Subtotal:</Text>
@@ -253,7 +248,6 @@ export function InvoiceDocument({ data }: Props) {
           </View>
         </View>
 
-        {/* Footer */}
         <View style={styles.footer}>
           {data.paymentTerms && (
             <Text style={styles.footerText}>Payment Terms: {data.paymentTerms}</Text>

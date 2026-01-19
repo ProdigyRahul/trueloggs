@@ -22,14 +22,12 @@ export function InvoiceDownloadButton({ invoiceData, disabled }: Props) {
     setError(null)
 
     try {
-      // Generate PDF blob
       const blob = await pdf(<InvoiceDocument data={invoiceData} />).toBlob()
 
       if (!blob || blob.size === 0) {
         throw new Error("Failed to generate PDF")
       }
 
-      // Create download link
       const url = URL.createObjectURL(blob)
       const filename = generateInvoiceFilename(
         invoiceData.invoiceNumber,
