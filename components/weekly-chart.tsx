@@ -29,12 +29,10 @@ export function WeeklyChart({
   targetHoursPerDay = 8,
   className,
 }: WeeklyChartProps) {
-  const [isMounted, setIsMounted] = useState(false)
+  const [isMounted] = useState(true)
   const [primaryColor, setPrimaryColor] = useState("#ec4899")
 
   useEffect(() => {
-    setIsMounted(true)
-
     const computeColor = () => {
       const style = getComputedStyle(document.documentElement)
       const primary = style.getPropertyValue("--primary").trim()

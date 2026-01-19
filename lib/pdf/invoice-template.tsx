@@ -8,7 +8,7 @@ import {
   View,
   StyleSheet,
 } from "@react-pdf/renderer"
-import type { InvoiceData } from "./invoice-types"
+import type { InvoiceData, InvoiceLineItem } from "./invoice-types"
 
 const COLORS = {
   primary: "#e11d48",
