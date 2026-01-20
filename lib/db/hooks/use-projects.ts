@@ -11,6 +11,7 @@ import type {
   ProjectStatus,
 } from "../schema"
 import { generateProjectColor, calculateRevenue } from "../utils"
+import { syncEngine } from "@/lib/sync/sync-engine"
 
 export function useProjects(status?: ProjectStatus) {
   const projects = useLiveQuery(
@@ -57,43 +58,101 @@ export function useProjects(status?: ProjectStatus) {
 
   const createProject = useCallback(async (input: CreateProjectInput): Promise<number> => {
     const now = new Date()
-    const project: Omit<Project, "id"> = {
+    const isAuthenticated = syncEngine.isEnabled()
+
+    const project = {
       ...input,
       color: input.color || generateProjectColor(),
       createdAt: now,
       updatedAt: now,
+      ...(isAuthenticated && {
+        syncStatus: "pending" as const,
+        syncVersion: 1,
+      }),
     }
+
     const id = await db.projects.add(project as Project)
+
+    if (isAuthenticated) {
+      await syncEngine.queueChange("project", id as number, "create", project)
+    }
+
     return id as number
   }, [])
 
   const updateProject = useCallback(async (id: number, input: UpdateProjectInput): Promise<void> => {
-    await db.projects.update(id, {
+    const isAuthenticated = syncEngine.isEnabled()
+    const existing = await db.projects.get(id)
+
+    const updates = {
       ...input,
       updatedAt: new Date(),
-    })
+      ...(isAuthenticated && {
+        syncStatus: "pending" as const,
+        syncVersion: (existing?.syncVersion || 0) + 1,
+      }),
+    }
+
+    await db.projects.update(id, updates)
+
+    if (isAuthenticated && existing) {
+      await syncEngine.queueChange("project", id, "update", updates, existing.cloudId)
+    }
   }, [])
 
   const deleteProject = useCallback(async (id: number): Promise<void> => {
+    const isAuthenticated = syncEngine.isEnabled()
+    const existing = await db.projects.get(id)
+
     await db.transaction("rw", [db.projects, db.timeEntries, db.recentTasks], async () => {
       await db.timeEntries.where("projectId").equals(id).delete()
       await db.recentTasks.where("projectId").equals(id).delete()
       await db.projects.delete(id)
     })
+
+    if (isAuthenticated && existing?.cloudId) {
+      await syncEngine.queueChange("project", id, "delete", { id }, existing.cloudId)
+    }
   }, [])
 
   const archiveProject = useCallback(async (id: number): Promise<void> => {
-    await db.projects.update(id, {
-      status: "archived",
+    const isAuthenticated = syncEngine.isEnabled()
+    const existing = await db.projects.get(id)
+
+    const updates = {
+      status: "archived" as const,
       updatedAt: new Date(),
-    })
+      ...(isAuthenticated && {
+        syncStatus: "pending" as const,
+        syncVersion: (existing?.syncVersion || 0) + 1,
+      }),
+    }
+
+    await db.projects.update(id, updates)
+
+    if (isAuthenticated && existing) {
+      await syncEngine.queueChange("project", id, "update", updates, existing.cloudId)
+    }
   }, [])
 
   const unarchiveProject = useCallback(async (id: number): Promise<void> => {
-    await db.projects.update(id, {
-      status: "active",
+    const isAuthenticated = syncEngine.isEnabled()
+    const existing = await db.projects.get(id)
+
+    const updates = {
+      status: "active" as const,
       updatedAt: new Date(),
-    })
+      ...(isAuthenticated && {
+        syncStatus: "pending" as const,
+        syncVersion: (existing?.syncVersion || 0) + 1,
+      }),
+    }
+
+    await db.projects.update(id, updates)
+
+    if (isAuthenticated && existing) {
+      await syncEngine.queueChange("project", id, "update", updates, existing.cloudId)
+    }
   }, [])
 
   const getProject = useCallback(async (id: number): Promise<Project | undefined> => {
