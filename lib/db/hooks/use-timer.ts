@@ -120,7 +120,7 @@ export function useTimer() {
 
       const entryId = await db.timeEntries.add(entry)
 
-      if (isAuthenticated) {
+      if (isAuthenticated && projectCloudId) {
         await syncEngine.queueChange("timeEntry", entryId as number, "create", {
           ...entry,
           projectCloudId,

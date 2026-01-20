@@ -129,12 +129,14 @@ export function MigrationDialog({
     try {
       await db.transaction(
         "rw",
-        [db.projects, db.timeEntries, db.invoices, db.recentTasks],
+        [db.projects, db.timeEntries, db.invoices, db.recentTasks, db.idMappings, db.syncQueue],
         async () => {
           await db.projects.clear()
           await db.timeEntries.clear()
           await db.invoices.clear()
           await db.recentTasks.clear()
+          await db.idMappings.clear()
+          await db.syncQueue.clear()
         }
       )
 

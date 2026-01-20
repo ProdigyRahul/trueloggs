@@ -153,7 +153,7 @@ async function processProject(
           syncVersion: existing.syncVersion + 1,
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(projects.cloudId, item.cloudId))
+        .where(and(eq(projects.cloudId, item.cloudId), eq(projects.userId, userId)))
         .returning()
 
       return {
@@ -270,7 +270,7 @@ async function processTimeEntry(
           syncVersion: existing.syncVersion + 1,
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(timeEntries.cloudId, item.cloudId))
+        .where(and(eq(timeEntries.cloudId, item.cloudId), eq(timeEntries.userId, userId)))
         .returning()
 
       return {
@@ -408,7 +408,7 @@ async function processInvoice(
           syncVersion: existing.syncVersion + 1,
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(invoices.cloudId, item.cloudId))
+        .where(and(eq(invoices.cloudId, item.cloudId), eq(invoices.userId, userId)))
         .returning()
 
       return {

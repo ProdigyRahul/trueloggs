@@ -13,7 +13,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await getUser()
 
   if (user) {
-    await syncUserToCloud(user)
+    try {
+      await syncUserToCloud(user)
+    } catch (error) {
+      console.error("Failed to sync user to cloud:", error)
+    }
   }
 
   return (

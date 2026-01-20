@@ -236,6 +236,7 @@ export async function POST(request: NextRequest) {
             target: settings.userId,
             set: {
               profileFullName: payload.settings.profile.fullName,
+              profileEmail: payload.settings.profile.email,
               profileCompany: payload.settings.profile.company,
               profilePhone: payload.settings.profile.phone,
               profileAddress: payload.settings.profile.address,
