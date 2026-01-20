@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { withAuth } from "@workos-inc/authkit-nextjs"
-import { cloudDb, projects, timeEntries, invoices } from "@/lib/db/cloud"
+import { cloudDb, projects, timeEntries, invoices, users } from "@/lib/db/cloud"
 import { eq, and } from "drizzle-orm"
 
 interface SyncItem {
@@ -33,6 +33,20 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    await cloudDb
+      .insert(users)
+      .values({
+        id: user.id,
+        email: user.email,
+        fullName:
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : user.firstName ?? user.lastName ?? undefined,
+        avatarUrl: user.profilePictureUrl ?? undefined,
+        updatedAt: new Date().toISOString(),
+      })
+      .onConflictDoNothing()
 
     const payload: SyncPayload = await request.json()
     const result: {

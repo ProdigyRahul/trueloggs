@@ -6,11 +6,15 @@ import { ModeToggle } from "@/components/mode-toggle"
 import { SyncProvider } from "@/lib/sync/sync-provider"
 import { SyncStatusIndicator } from "@/components/sync-status"
 import { UserMenu } from "@/components/user-menu"
-import { getUser } from "@/lib/auth/server"
+import { getUser, syncUserToCloud } from "@/lib/auth/server"
 import { DashboardMigrationHandler } from "./migration-handler"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser()
+
+  if (user) {
+    await syncUserToCloud(user)
+  }
 
   return (
     <DatabaseProvider>

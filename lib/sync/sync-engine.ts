@@ -207,7 +207,7 @@ class SyncEngine {
           await db.syncQueue
             .where("entityType")
             .equals("project")
-            .and((q) => q.entityId === item.localId)
+            .filter((q) => q.entityId === item.localId)
             .delete()
 
           pushed++
@@ -216,6 +216,13 @@ class SyncEngine {
             syncStatus: "conflict",
           } as Record<string, unknown>)
           conflicts++
+        } else if (item.status === "error") {
+          console.error(`Sync error for project ${item.localId}:`, item.error)
+          await db.syncQueue
+            .where("entityType")
+            .equals("project")
+            .filter((q) => q.entityId === item.localId)
+            .delete()
         }
       }
     }
@@ -234,7 +241,7 @@ class SyncEngine {
           await db.syncQueue
             .where("entityType")
             .equals("timeEntry")
-            .and((q) => q.entityId === item.localId)
+            .filter((q) => q.entityId === item.localId)
             .delete()
 
           pushed++
@@ -243,6 +250,13 @@ class SyncEngine {
             syncStatus: "conflict",
           } as Record<string, unknown>)
           conflicts++
+        } else if (item.status === "error") {
+          console.error(`Sync error for timeEntry ${item.localId}:`, item.error)
+          await db.syncQueue
+            .where("entityType")
+            .equals("timeEntry")
+            .filter((q) => q.entityId === item.localId)
+            .delete()
         }
       }
     }
@@ -261,7 +275,7 @@ class SyncEngine {
           await db.syncQueue
             .where("entityType")
             .equals("invoice")
-            .and((q) => q.entityId === item.localId)
+            .filter((q) => q.entityId === item.localId)
             .delete()
 
           pushed++
@@ -270,6 +284,13 @@ class SyncEngine {
             syncStatus: "conflict",
           })
           conflicts++
+        } else if (item.status === "error") {
+          console.error(`Sync error for invoice ${item.localId}:`, item.error)
+          await db.syncQueue
+            .where("entityType")
+            .equals("invoice")
+            .filter((q) => q.entityId === item.localId)
+            .delete()
         }
       }
     }
@@ -555,17 +576,29 @@ class SyncEngine {
   private groupByEntityType(items: SyncQueueItem[]): Record<string, unknown[]> {
     const grouped: Record<string, unknown[]> = {}
 
+    const pluralMap: Record<string, string> = {
+      project: "projects",
+      timeEntry: "timeEntries",
+      invoice: "invoices",
+      settings: "settings",
+      timerState: "timerStates",
+      recentTask: "recentTasks",
+    }
+
     for (const item of items) {
-      const key = `${item.entityType}s`
+      const key = pluralMap[item.entityType] || `${item.entityType}s`
       if (!grouped[key]) {
         grouped[key] = []
       }
+      const payload = item.payload as Record<string, unknown> | undefined
+      const syncVersion = (payload?.syncVersion as number) || 1
+
       grouped[key].push({
         operation: item.operation,
         localId: item.entityId,
         cloudId: item.cloudId,
         data: item.payload,
-        syncVersion: 1,
+        syncVersion,
       })
     }
 
@@ -618,7 +651,7 @@ class SyncEngine {
     const existing = await db.syncQueue
       .where("entityType")
       .equals(entityType)
-      .and((item) => item.entityId === entityId)
+      .filter((item) => item.entityId === entityId)
       .first()
 
     if (existing) {
