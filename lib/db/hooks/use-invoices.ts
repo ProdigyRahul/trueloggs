@@ -10,6 +10,7 @@ import type {
   UpdateInvoiceInput,
   DateRange,
 } from "../schema"
+import { syncEngine } from "@/lib/sync/sync-engine"
 
 interface UseInvoicesOptions {
   status?: InvoiceStatus
@@ -71,6 +72,7 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
   const createInvoice = useCallback(
     async (input: CreateInvoiceInput): Promise<number> => {
       const now = new Date().toISOString()
+      const isAuthenticated = syncEngine.isEnabled()
 
       const existing = await db.invoices
         .where("invoiceNumber")
@@ -85,9 +87,18 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
         ...input,
         createdAt: now,
         updatedAt: now,
+        ...(isAuthenticated && {
+          syncStatus: "pending" as const,
+          syncVersion: 1,
+        }),
       }
 
       const id = await db.invoices.add(invoice as Invoice)
+
+      if (isAuthenticated) {
+        await syncEngine.queueChange("invoice", id as number, "create", invoice)
+      }
+
       return id as number
     },
     []
@@ -95,19 +106,39 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
 
   const updateInvoice = useCallback(
     async (id: number, input: UpdateInvoiceInput): Promise<void> => {
-      await db.invoices.update(id, {
+      const isAuthenticated = syncEngine.isEnabled()
+      const existing = await db.invoices.get(id)
+
+      const updates = {
         ...input,
         updatedAt: new Date().toISOString(),
-      })
+        ...(isAuthenticated && {
+          syncStatus: "pending" as const,
+          syncVersion: (existing?.syncVersion || 0) + 1,
+        }),
+      }
+
+      await db.invoices.update(id, updates)
+
+      if (isAuthenticated && existing) {
+        await syncEngine.queueChange("invoice", id, "update", updates, existing.cloudId)
+      }
     },
     []
   )
 
   const updateStatus = useCallback(
     async (id: number, status: InvoiceStatus): Promise<void> => {
+      const isAuthenticated = syncEngine.isEnabled()
+      const existing = await db.invoices.get(id)
+
       const updates: Partial<Invoice> = {
         status,
         updatedAt: new Date().toISOString(),
+        ...(isAuthenticated && {
+          syncStatus: "pending" as const,
+          syncVersion: (existing?.syncVersion || 0) + 1,
+        }),
       }
 
       if (status === "paid") {
@@ -115,12 +146,23 @@ export function useInvoices(options: UseInvoicesOptions = {}) {
       }
 
       await db.invoices.update(id, updates)
+
+      if (isAuthenticated && existing) {
+        await syncEngine.queueChange("invoice", id, "update", updates, existing.cloudId)
+      }
     },
     []
   )
 
   const deleteInvoice = useCallback(async (id: number): Promise<void> => {
+    const isAuthenticated = syncEngine.isEnabled()
+    const existing = await db.invoices.get(id)
+
     await db.invoices.delete(id)
+
+    if (isAuthenticated && existing?.cloudId) {
+      await syncEngine.queueChange("invoice", id, "delete", { id }, existing.cloudId)
+    }
   }, [])
 
   return {

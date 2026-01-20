@@ -10,6 +10,7 @@ import type {
   DateRange,
 } from "../schema"
 import { normalizeDate, getStartOfWeek, getEndOfWeek, getStartOfDay, getEndOfDay } from "../utils"
+import { syncEngine } from "@/lib/sync/sync-engine"
 
 interface UseTimeEntriesOptions {
   projectId?: number
@@ -56,17 +57,42 @@ export function useTimeEntries(options: UseTimeEntriesOptions = {}) {
 
   const createEntry = useCallback(async (input: CreateTimeEntryInput): Promise<number> => {
     const now = new Date()
-    const entry: Omit<TimeEntry, "id"> = {
+    const isAuthenticated = syncEngine.isEnabled()
+
+    let projectCloudId: string | undefined
+    if (isAuthenticated) {
+      const project = await db.projects.get(input.projectId)
+      projectCloudId = project?.cloudId
+    }
+
+    const entry: TimeEntry = {
       ...input,
       date: normalizeDate(input.date),
       createdAt: now,
       updatedAt: now,
+      ...(isAuthenticated && {
+        syncStatus: "pending" as const,
+        syncVersion: 1,
+        projectCloudId,
+      }),
     }
-    const id = await db.timeEntries.add(entry as TimeEntry)
+
+    const id = await db.timeEntries.add(entry)
+
+    if (isAuthenticated) {
+      await syncEngine.queueChange("timeEntry", id as number, "create", {
+        ...entry,
+        projectCloudId,
+      })
+    }
+
     return id as number
   }, [])
 
   const updateEntry = useCallback(async (id: number, input: UpdateTimeEntryInput): Promise<void> => {
+    const isAuthenticated = syncEngine.isEnabled()
+    const existing = await db.timeEntries.get(id)
+
     const updates: Partial<TimeEntry> = {
       ...input,
       updatedAt: new Date(),
@@ -74,11 +100,28 @@ export function useTimeEntries(options: UseTimeEntriesOptions = {}) {
     if (input.date) {
       updates.date = normalizeDate(input.date)
     }
+
+    if (isAuthenticated) {
+      updates.syncStatus = "pending"
+      updates.syncVersion = (existing?.syncVersion || 0) + 1
+    }
+
     await db.timeEntries.update(id, updates)
+
+    if (isAuthenticated && existing) {
+      await syncEngine.queueChange("timeEntry", id, "update", updates, existing.cloudId)
+    }
   }, [])
 
   const deleteEntry = useCallback(async (id: number): Promise<void> => {
+    const isAuthenticated = syncEngine.isEnabled()
+    const existing = await db.timeEntries.get(id)
+
     await db.timeEntries.delete(id)
+
+    if (isAuthenticated && existing?.cloudId) {
+      await syncEngine.queueChange("timeEntry", id, "delete", { id }, existing.cloudId)
+    }
   }, [])
 
   const getEntry = useCallback(async (id: number): Promise<TimeEntry | undefined> => {

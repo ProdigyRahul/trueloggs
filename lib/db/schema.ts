@@ -1,5 +1,7 @@
 export type ProjectStatus = "active" | "archived"
 
+export type SyncStatus = "synced" | "pending" | "conflict"
+
 export interface Project {
   id?: number
   name: string
@@ -9,6 +11,9 @@ export interface Project {
   status: ProjectStatus
   createdAt: Date
   updatedAt: Date
+  cloudId?: string
+  syncStatus?: SyncStatus
+  syncVersion?: number
 }
 
 export interface TimeEntry {
@@ -19,6 +24,10 @@ export interface TimeEntry {
   notes?: string
   createdAt: Date
   updatedAt: Date
+  cloudId?: string
+  projectCloudId?: string
+  syncStatus?: SyncStatus
+  syncVersion?: number
 }
 
 export interface TimerState {
@@ -59,6 +68,9 @@ export interface Settings {
   workSettings: WorkSettings
   invoiceSettings: InvoiceSettings
   theme: ThemePreference
+  cloudId?: string
+  syncStatus?: SyncStatus
+  syncVersion?: number
 }
 
 export interface RecentTask {
@@ -88,65 +100,49 @@ export interface DateRange {
   end: Date
 }
 
-// Invoice status enum
 export type InvoiceStatus = "draft" | "sent" | "paid" | "cancelled"
 
-// Stored version of InvoiceLineItem (dates as ISO strings for IndexedDB)
 export interface StoredInvoiceLineItem {
-  date: string // ISO string
+  date: string
   description: string
-  duration: number // minutes
+  duration: number
   rate: number
   amount: number
 }
 
-// Main Invoice entity - stores COMPLETE SNAPSHOT of invoice data
 export interface Invoice {
   id?: number
-
-  // Identification
   invoiceNumber: string
   status: InvoiceStatus
-
-  // Dates (ISO strings for IndexedDB compatibility)
   invoiceDate: string
   dueDate: string
   createdAt: string
   updatedAt: string
   paidAt?: string
-
-  // Snapshot of company info at invoice time
   companyName: string
   companyEmail: string
   companyPhone: string
   companyAddress: string
-
-  // Snapshot of client/project info
   clientName: string
   clientEmail?: string
   projectName: string
   projectColor: string
-
-  // Reference to original project (may be null if deleted)
   projectId?: number
-
-  // Financial data
-  lineItems: StoredInvoiceLineItem[] // Embedded array
+  lineItems: StoredInvoiceLineItem[]
   subtotal: number
   taxRate: number
   taxAmount: number
   total: number
-
-  // Period covered
   periodStart: string
   periodEnd: string
-
-  // Additional
   notes?: string
   paymentTerms?: string
+  cloudId?: string
+  projectCloudId?: string
+  syncStatus?: SyncStatus
+  syncVersion?: number
 }
 
-// CRUD input types
 export type CreateInvoiceInput = Omit<Invoice, "id" | "createdAt" | "updatedAt">
 export type UpdateInvoiceInput = Partial<Pick<Invoice, "status" | "notes" | "paidAt">>
 
@@ -158,4 +154,94 @@ export interface ExportData {
   invoices: Invoice[]
   settings: Settings | null
   recentTasks: RecentTask[]
+}
+
+export type SyncEntityType =
+  | "project"
+  | "timeEntry"
+  | "timerState"
+  | "settings"
+  | "recentTask"
+  | "invoice"
+
+export type SyncOperation = "create" | "update" | "delete"
+
+export interface SyncQueueItem {
+  id?: number
+  entityType: SyncEntityType
+  entityId: number
+  cloudId?: string
+  operation: SyncOperation
+  payload: unknown
+  createdAt: Date
+  retryCount: number
+  lastError?: string
+}
+
+export interface IdMapping {
+  id?: number
+  entityType: string
+  localId: number
+  cloudId: string
+  userId: string
+}
+
+export interface LocalSyncMetadata {
+  id?: number
+  entityType: SyncEntityType
+  lastSyncedAt: Date
+  lastSyncVersion: number
+}
+
+export interface SyncableProject extends Project {
+  cloudId?: string
+  syncStatus: SyncStatus
+  syncVersion: number
+  lastSyncedAt?: Date
+}
+
+export interface SyncableTimeEntry extends TimeEntry {
+  cloudId?: string
+  projectCloudId?: string
+  syncStatus: SyncStatus
+  syncVersion: number
+  lastSyncedAt?: Date
+}
+
+export interface SyncableRecentTask extends RecentTask {
+  cloudId?: string
+  projectCloudId?: string
+  syncStatus: SyncStatus
+  syncVersion: number
+}
+
+export interface SyncableInvoice extends Invoice {
+  cloudId?: string
+  projectCloudId?: string
+  syncStatus: SyncStatus
+  syncVersion: number
+  lastSyncedAt?: Date
+}
+
+export interface ConflictInfo<T> {
+  entityType: SyncEntityType
+  entityId: string
+  localVersion: T
+  serverVersion: T
+  localUpdatedAt: Date
+  serverUpdatedAt: Date
+}
+
+export type MigrationOption = "merge" | "keep-local" | "keep-cloud" | "cancel"
+
+export interface MigrationResult {
+  action: "pushed" | "pulled" | "merged" | "conflict"
+  merged: boolean
+  options?: Array<{ id: MigrationOption; label: string }>
+  mappings?: {
+    projects: Record<number, string>
+    timeEntries: Record<number, string>
+    invoices: Record<number, string>
+  }
+  errors?: string[]
 }

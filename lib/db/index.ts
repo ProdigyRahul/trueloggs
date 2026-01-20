@@ -6,6 +6,9 @@ import type {
   Settings,
   RecentTask,
   Invoice,
+  SyncQueueItem,
+  IdMapping,
+  LocalSyncMetadata,
 } from "./schema"
 
 class TrueLoggsDB extends Dexie {
@@ -15,6 +18,9 @@ class TrueLoggsDB extends Dexie {
   settings!: EntityTable<Settings, "id">
   recentTasks!: EntityTable<RecentTask, "id">
   invoices!: EntityTable<Invoice, "id">
+  syncQueue!: EntityTable<SyncQueueItem, "id">
+  idMappings!: EntityTable<IdMapping, "id">
+  syncMetadata!: EntityTable<LocalSyncMetadata, "id">
 
   constructor() {
     super("TrueLoggsDB")
@@ -27,6 +33,50 @@ class TrueLoggsDB extends Dexie {
       recentTasks: "++id, projectId, taskDescription, lastUsedAt, [projectId+taskDescription]",
       invoices: "++id, &invoiceNumber, status, clientName, projectId, invoiceDate, createdAt",
     })
+
+    this.version(4)
+      .stores({
+        projects: "++id, name, status, clientName, createdAt, cloudId, syncStatus",
+        timeEntries: "++id, projectId, date, [projectId+date], createdAt, cloudId, syncStatus",
+        timerState: "id",
+        settings: "id",
+        recentTasks: "++id, projectId, taskDescription, lastUsedAt, [projectId+taskDescription], cloudId",
+        invoices: "++id, &invoiceNumber, status, clientName, projectId, invoiceDate, createdAt, cloudId",
+        syncQueue: "++id, entityType, entityId, operation, createdAt",
+        idMappings: "++id, [entityType+localId], [entityType+cloudId], userId",
+        syncMetadata: "++id, entityType",
+      })
+      .upgrade((tx) => {
+        return Promise.all([
+          tx
+            .table("projects")
+            .toCollection()
+            .modify((project) => {
+              project.syncStatus = "pending"
+              project.syncVersion = 1
+            }),
+          tx
+            .table("timeEntries")
+            .toCollection()
+            .modify((entry) => {
+              entry.syncStatus = "pending"
+              entry.syncVersion = 1
+            }),
+          tx
+            .table("recentTasks")
+            .toCollection()
+            .modify((task) => {
+              task.syncVersion = 1
+            }),
+          tx
+            .table("invoices")
+            .toCollection()
+            .modify((invoice) => {
+              invoice.syncStatus = "pending"
+              invoice.syncVersion = 1
+            }),
+        ])
+      })
   }
 }
 
@@ -80,4 +130,29 @@ export async function initializeDatabase(): Promise<void> {
   }
 }
 
-export type { Project, TimeEntry, TimerState, Settings, RecentTask, InvoiceSettings, Invoice, InvoiceStatus, CreateInvoiceInput, UpdateInvoiceInput, StoredInvoiceLineItem } from "./schema"
+export type {
+  Project,
+  TimeEntry,
+  TimerState,
+  Settings,
+  RecentTask,
+  InvoiceSettings,
+  Invoice,
+  InvoiceStatus,
+  CreateInvoiceInput,
+  UpdateInvoiceInput,
+  StoredInvoiceLineItem,
+  SyncStatus,
+  SyncEntityType,
+  SyncOperation,
+  SyncQueueItem,
+  IdMapping,
+  LocalSyncMetadata,
+  SyncableProject,
+  SyncableTimeEntry,
+  SyncableRecentTask,
+  SyncableInvoice,
+  ConflictInfo,
+  MigrationOption,
+  MigrationResult,
+} from "./schema"
