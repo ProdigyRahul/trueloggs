@@ -64,7 +64,7 @@ export function MigrationDialog({
       const response = await fetch("/api/sync/migrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(localData),
+        body: JSON.stringify({ ...localData, option: "merge" }),
       })
 
       if (!response.ok) {
@@ -98,7 +98,7 @@ export function MigrationDialog({
       const response = await fetch("/api/sync/migrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(localData),
+        body: JSON.stringify({ ...localData, option: "keep-local" }),
       })
 
       if (!response.ok) {

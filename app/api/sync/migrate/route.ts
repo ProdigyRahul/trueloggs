@@ -8,8 +8,10 @@ import {
   settings,
   recentTasks,
 } from "@/lib/db/cloud"
+import { eq } from "drizzle-orm"
 
 interface MigrationPayload {
+  option?: "merge" | "keep-local"
   projects: Array<{
     id: number
     name: string
@@ -101,6 +103,13 @@ export async function POST(request: NextRequest) {
     const timeEntryIdMap = new Map<number, string>()
     const invoiceIdMap = new Map<number, string>()
     const errors: string[] = []
+
+    if (payload.option === "keep-local") {
+      await cloudDb.delete(recentTasks).where(eq(recentTasks.userId, user.id))
+      await cloudDb.delete(timeEntries).where(eq(timeEntries.userId, user.id))
+      await cloudDb.delete(invoices).where(eq(invoices.userId, user.id))
+      await cloudDb.delete(projects).where(eq(projects.userId, user.id))
+    }
 
     for (const project of payload.projects) {
       try {
