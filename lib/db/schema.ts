@@ -68,6 +68,9 @@ export interface Settings {
   workSettings: WorkSettings
   invoiceSettings: InvoiceSettings
   theme: ThemePreference
+  cloudId?: string
+  syncStatus?: SyncStatus
+  syncVersion?: number
 }
 
 export interface RecentTask {

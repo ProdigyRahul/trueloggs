@@ -42,6 +42,7 @@ export function MigrationDialog({
   const [selectedOption, setSelectedOption] = useState<MigrationOption | null>(
     null
   )
+  const [error, setError] = useState<string | null>(null)
 
   const hasLocalData =
     localCounts.projects > 0 ||
@@ -56,6 +57,7 @@ export function MigrationDialog({
   const handleMerge = async () => {
     setIsLoading(true)
     setSelectedOption("merge")
+    setError(null)
     try {
       const localData = await exportAllData()
 
@@ -66,7 +68,8 @@ export function MigrationDialog({
       })
 
       if (!response.ok) {
-        throw new Error("Migration failed")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Migration failed: ${response.status}`)
       }
 
       const result = await response.json()
@@ -76,8 +79,9 @@ export function MigrationDialog({
       }
 
       onComplete("merge")
-    } catch (error) {
-      console.error("Merge error:", error)
+    } catch (err) {
+      console.error("Merge error:", err)
+      setError(err instanceof Error ? err.message : "Migration failed")
       setSelectedOption(null)
     } finally {
       setIsLoading(false)
@@ -87,6 +91,7 @@ export function MigrationDialog({
   const handleKeepLocal = async () => {
     setIsLoading(true)
     setSelectedOption("keep-local")
+    setError(null)
     try {
       const localData = await exportAllData()
 
@@ -97,7 +102,8 @@ export function MigrationDialog({
       })
 
       if (!response.ok) {
-        throw new Error("Migration failed")
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Migration failed: ${response.status}`)
       }
 
       const result = await response.json()
@@ -107,8 +113,9 @@ export function MigrationDialog({
       }
 
       onComplete("keep-local")
-    } catch (error) {
-      console.error("Keep local error:", error)
+    } catch (err) {
+      console.error("Keep local error:", err)
+      setError(err instanceof Error ? err.message : "Migration failed")
       setSelectedOption(null)
     } finally {
       setIsLoading(false)
@@ -118,6 +125,7 @@ export function MigrationDialog({
   const handleKeepCloud = async () => {
     setIsLoading(true)
     setSelectedOption("keep-cloud")
+    setError(null)
     try {
       await db.transaction(
         "rw",
@@ -131,8 +139,9 @@ export function MigrationDialog({
       )
 
       onComplete("keep-cloud")
-    } catch (error) {
-      console.error("Keep cloud error:", error)
+    } catch (err) {
+      console.error("Keep cloud error:", err)
+      setError(err instanceof Error ? err.message : "Failed to clear local data")
       setSelectedOption(null)
     } finally {
       setIsLoading(false)
@@ -179,15 +188,15 @@ export function MigrationDialog({
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           {hasLocalData && hasCloudData && (
             <Button
               variant="outline"
-              className="w-full justify-start gap-2"
+              className="w-full h-auto justify-start gap-3 px-4 py-3"
               onClick={handleMerge}
               disabled={isLoading}
             >
-              <Merge className="size-4" />
+              <Merge className="size-5 shrink-0" />
               <div className="text-left">
                 <div className="font-medium">Merge Both</div>
                 <div className="text-xs text-muted-foreground">
@@ -203,11 +212,11 @@ export function MigrationDialog({
           {hasLocalData && (
             <Button
               variant="outline"
-              className="w-full justify-start gap-2"
+              className="w-full h-auto justify-start gap-3 px-4 py-3"
               onClick={handleKeepLocal}
               disabled={isLoading}
             >
-              <HardDrive className="size-4" />
+              <HardDrive className="size-5 shrink-0" />
               <div className="text-left">
                 <div className="font-medium">Keep Local</div>
                 <div className="text-xs text-muted-foreground">
@@ -224,11 +233,11 @@ export function MigrationDialog({
           {hasCloudData && (
             <Button
               variant="outline"
-              className="w-full justify-start gap-2"
+              className="w-full h-auto justify-start gap-3 px-4 py-3"
               onClick={handleKeepCloud}
               disabled={isLoading}
             >
-              <Cloud className="size-4" />
+              <Cloud className="size-5 shrink-0" />
               <div className="text-left">
                 <div className="font-medium">Keep Cloud</div>
                 <div className="text-xs text-muted-foreground">
@@ -242,6 +251,12 @@ export function MigrationDialog({
             </Button>
           )}
         </div>
+
+        {error && (
+          <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
         <AlertDialogFooter>
           <Button variant="ghost" onClick={handleCancel} disabled={isLoading}>

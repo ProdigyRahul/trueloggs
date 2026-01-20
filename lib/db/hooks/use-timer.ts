@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, useRef } from "react"
 import { db } from "../index"
 import type { TimerState, TimeEntry } from "../schema"
 import { normalizeDate, formatTimerDisplay } from "../utils"
+import { syncEngine } from "@/lib/sync/sync-engine"
 
 function calculateElapsedSeconds(state: TimerState | null | undefined): number {
   if (!state) return 0
@@ -95,14 +96,36 @@ export function useTimer() {
 
     if (durationMinutes > 0) {
       const now = new Date()
-      const entryId = await db.timeEntries.add({
+      const isAuthenticated = syncEngine.isEnabled()
+
+      let projectCloudId: string | undefined
+      if (isAuthenticated) {
+        const project = await db.projects.get(state.projectId)
+        projectCloudId = project?.cloudId
+      }
+
+      const entry: TimeEntry = {
         projectId: state.projectId,
         date: normalizeDate(now),
         duration: durationMinutes,
         notes: state.taskDescription || undefined,
         createdAt: now,
         updatedAt: now,
-      })
+        ...(isAuthenticated && {
+          syncStatus: "pending" as const,
+          syncVersion: 1,
+          projectCloudId,
+        }),
+      }
+
+      const entryId = await db.timeEntries.add(entry)
+
+      if (isAuthenticated) {
+        await syncEngine.queueChange("timeEntry", entryId as number, "create", {
+          ...entry,
+          projectCloudId,
+        })
+      }
 
       if (state.taskDescription) {
         await updateRecentTask(state.projectId, state.taskDescription)
