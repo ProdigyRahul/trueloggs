@@ -277,9 +277,7 @@ export async function POST(request: NextRequest) {
           usageCount: task.usageCount,
           syncVersion: 1,
         })
-      } catch {
-        // Skip recent task errors as they're not critical
-      }
+      } catch {}
     }
 
     return NextResponse.json({
